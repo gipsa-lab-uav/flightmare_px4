@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="quad_name" default="iris"/>
+
+  <arg name="mav_name" default="$(arg quad_name)"/>
+
+  <arg name="use_unity_editor" default="false" />
+  
+  <arg name="scene_id" default="3"/>
+
+  <include file="$(find px4)/launch/mavros_posix_sitl.launch">
+    <arg name="vehicle" value="iris"/>
+    <arg name="sdf" value="$(find flightmare_px4)/models/iris_ground_truth/iris_ground_truth.sdf"/>
+    <arg name="gui" value="false"/>
+  </include>
+
+  <node pkg="flightmare_px4" type="odom2posetwist.py" name="odom2posetwist" output="screen">
+     <remap from="odom" to="/iris/ground_truth/odometry"/>
+     <remap from="pose" to="/mavros/vision_pose/pose" />
+     <!--<remap from="pose_cov" to="/mavros/vision_pose/pose_cov" />-->
+     <remap from="speed_twist_cov" to="/mavros/vision_speed/speed_twist_cov" />
+     <param name="pos_noise" value="0.001"/>
+     <param name="rot_noise" value="0.001"/>
+     <param name="vel_noise" value="0.001"/>
+     <param name="rotvel_noise" value="0.001"/>
+  </node>
+  
+  <!-- RPG stuff !-->
+  <group ns="$(arg quad_name)" >
+
+
+    <!-- RPG Flightmare Unity Render. -->
+    <node pkg="flightrender" type="RPG_Flightmare.x86_64" name="rpg_flightmare_render" unless="$(arg use_unity_editor)">
+    </node>
+    
+    <node pkg="flightmare_px4" type="flightmare_px4" name="flightmare_px4" output="screen">
+      <rosparam file="$(find flightmare_px4)/params/default.yaml" /> 
+      <remap from="ground_truth/odometry" to="ground_truth/odometry" />
+      <param name="scene_id" value="$(arg scene_id)"/>
+      <param name="cam_x" value="0.35"/>
+      <param name="cam_y" value="0.0"/>
+      <param name="cam_z" value="0.2"/>
+      <param name="cam_qx" value="0.4777144"/>
+      <param name="cam_qy" value="-0.4777144"/>
+      <param name="cam_qz" value="0.5213338"/>
+      <param name="cam_qw" value="-0.5213338"/>
+    </node>
+  </group> 
+
+</launch>
